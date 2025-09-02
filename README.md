@@ -1,72 +1,35 @@
-# 🌊 Algorithme du Flux - Recherche de Cohérence
+# 🚚 Assistant Intelligent d’Optimisation Logistique
 
-Cette application illustre un **algorithme du flux de cohérence** permettant d’analyser et de visualiser les relations entre différentes variables d’un jeu de données.  
-Elle est déployée avec **Streamlit Cloud** et accessible en ligne.
+Cette application **Streamlit** est un assistant d’aide à la décision logistique.  
+Elle optimise automatiquement les trajets de livraison en comparant plusieurs **motorisations** (Thermique, Hybride, Électrique) et différents **scénarios de conduite** (Éco, À l’heure, Express).  
 
-👉 [Accéder à l’application](https://TON-LIEN-STREAMLIT.streamlit.app)
-
----
-
-## 🚀 Fonctionnalités
-
-- 🔢 Génération aléatoire de données (pour tester rapidement l’algorithme).  
-- 📂 Import de fichiers CSV (utiliser vos propres données).  
-- 📈 Analyse des corrélations entre variables.  
-- 🎨 Visualisation côte à côte :
-  - Heatmap statique (Seaborn)  
-  - Heatmap interactive (Plotly)  
-- 💾 Exportation de la matrice en **CSV**.  
+L’algorithme recherche la **solution la moins coûteuse** qui respecte les délais tout en imposant une contrainte stricte :  
+> ✅ Chaque livraison doit arriver **au moins 10 minutes avant le délai maximal fixé**.  
 
 ---
 
-## 🛠️ Exemple d’utilisation
+## ⚡ Fonctionnalités
 
-### 📦 Logistique (supply chain)  
-Une entreprise analyse ses données de livraison :  
-- Distance parcourue  
-- Temps de transport  
-- Coût du carburant  
-- Taux de retard  
+- Simulation de trajets logistiques avec paramètres ajustables :  
+  - Distance du trajet  
+  - Prix carburant / énergie (€)  
+  - Coût horaire du conducteur (€)  
+  - Prix du CO₂ (€ / kg)  
+  - Délai maximum (avec 10 minutes d’avance obligatoire)  
 
-Grâce à l’application :  
-- Elle identifie les variables **fortement corrélées** (ex. distance ↔️ carburant).  
-- Elle visualise rapidement les **facteurs critiques**.  
-- Elle optimise la **planification des livraisons**.
+- Comparaison automatique de :  
+  - **Motorisations** : Thermique, Hybride, Électrique  
+  - **Scénarios logistiques** : Éco, À l’heure, Express  
 
----
+- Résultats clairs et détaillés :  
+  - Vitesse optimale  
+  - Temps total (h)  
+  - Coût total (€)  
+  - Émissions CO₂ (kg)  
+  - Motorisation & scénario retenus  
 
-## 📊 Exemple chiffré
-
-### Jeu de données (simplifié)
-| Livraison | Distance (km) | Temps (h) | Carburant (€) | Retards (%) |
-|-----------|---------------|-----------|---------------|-------------|
-| 1         | 120           | 2.0       | 18            | 5           |
-| 2         | 300           | 5.1       | 45            | 12          |
-| 3         | 150           | 2.6       | 22            | 7           |
-| 4         | 400           | 6.8       | 60            | 15          |
-| 5         | 250           | 4.4       | 38            | 10          |
-
-### Matrice de corrélation (calculée)
-| Variable     | Distance | Temps  | Carburant | Retards |
-|--------------|----------|--------|-----------|---------|
-| **Distance** | 1.00     | 0.98   | 0.99      | 0.95    |
-| **Temps**    | 0.98     | 1.00   | 0.97      | 0.93    |
-| **Carburant**| 0.99     | 0.97   | 1.00      | 0.96    |
-| **Retards**  | 0.95     | 0.93   | 0.96      | 1.00    |
-
-### 🔥 Exemple visuel
-![Matrice de corrélation](matrice_correlation_exemple.png)
-
-**Interprétation :**  
-- Plus la distance est grande, plus le temps, le carburant et les retards augmentent.  
-- Réduire les distances peut améliorer les coûts et la ponctualité.  
+- Sélection automatique de la **meilleure solution logistique**.  
 
 ---
 
-## ⚙️ Installation locale (optionnel)
-
-```bash
-git clone https://github.com/TON-UTILISATEUR/flux-coherence.git
-cd flux-coherence
-pip install -r requirements.txt
-streamlit run streamlit_app.py
+## 📊 Exemple de Résultat
