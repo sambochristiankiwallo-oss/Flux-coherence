@@ -1,53 +1,114 @@
 import streamlit as st
+import pandas as pd
 import numpy as np
 
-st.set_page_config(page_title="Optimisation Trajet", page_icon="🚚")
+# -------------------------------
+# Paramètres de simulation
+# -------------------------------
+scenarios = {
+    "Éco": {"w_fuel": 0.6, "w_time": 0.2, "w_emiss": 0.2},
+    "À l’heure": {"w_fuel": 0.3, "w_time": 0.5, "w_emiss": 0.2},
+    "Express": {"w_fuel": 0.2, "w_time": 0.6, "w_emiss": 0.2},
+}
 
-st.title("🚚 Optimisation Trajet - Temps, Carburant et Retards")
+motorisations = {
+    "Thermique": {"conso_L100": 6.5, "emiss_CO2": 2.3},   # kg CO₂ par litre
+    "Hybride": {"conso_L100": 4.5, "emiss_CO2": 1.5},
+    "Électrique": {"conso_L100": 18/100, "emiss_CO2": 0.05}  # kWh/km
+}
 
-st.write("Cette application simule un trajet et propose des recommandations pour optimiser le **temps** et le **carburant**.")
+# -------------------------------
+# Fonction d’optimisation
+# -------------------------------
+def optimize_speeds(distance_km, fuel_price, driver_cost_h,
+                    v_min, v_max, w_fuel, w_time, w_emiss,
+                    motor, carbon_price, deadline_h):
 
-# === Entrée utilisateur ===
-distance = st.number_input("Distance (km)", min_value=10, max_value=2000, value=200)
-vitesse = st.slider("Vitesse moyenne (km/h)", min_value=30, max_value=150, value=90)
-conso = st.number_input("Consommation (L/100km)", min_value=3.0, max_value=20.0, value=6.5)
-prix = st.number_input("Prix carburant (€ / L)", min_value=1.0, max_value=3.0, value=1.8)
+    speeds = np.linspace(v_min, v_max, 20)
+    best = None
 
-# === Calculs ===
-temps = distance / vitesse
-carburant = distance * conso / 100
-cout = carburant * prix
+    for v in speeds:
+        # Temps (heures)
+        time_h = distance_km / v
 
-# Retard estimé si vitesse < 60
-retard = max(0, (60 - vitesse) * 0.05 * distance)
+        # Conso carburant ou énergie
+        conso_L100 = motorisations[motor]["conso_L100"]
+        fuel_used = conso_L100 * distance_km / 100
 
-# === Résultats ===
-st.subheader("📊 Résultats du trajet")
-st.write(f"⏱️ Temps estimé : **{temps:.2f} heures**")
-st.write(f"⛽ Carburant consommé : **{carburant:.1f} L**")
-st.write(f"💰 Coût total : **{cout:.2f} €**")
-st.write(f"🐌 Retard estimé : **{retard:.1f} minutes**")
+        # Coût carburant
+        cost_fuel = fuel_used * fuel_price
 
-# === Recommandations ===
-st.subheader("💡 Recommandations")
-if cout > 150:
-    st.warning("⚠️ Le coût est élevé. Réduis la vitesse pour consommer moins de carburant.")
-if retard > 0:
-    st.error("🚦 Attention, vitesse trop faible : risque de retard important.")
-if cout < 100 and retard == 0:
-    st.success("✅ Ton trajet est optimisé : bon équilibre entre temps et coût.")
+        # Coût temps conducteur
+        cost_time = time_h * driver_cost_h
 
-# Graphique comparatif
-import matplotlib.pyplot as plt
+        # Émissions CO₂
+        emissions = fuel_used * motorisations[motor]["emiss_CO2"]
 
-vitesses = np.arange(40, 130, 10)
-temps_list = distance / vitesses
-carburant_list = distance * conso / 100
-cout_list = carburant_list * prix
+        # Coût CO₂
+        cost_co2 = emissions * carbon_price
 
-fig, ax = plt.subplots()
-ax.plot(vitesses, temps_list, label="Temps (h)")
-ax.plot(vitesses, cout_list, label="Coût (€)")
-ax.set_xlabel("Vitesse (km/h)")
-ax.legend()
-st.pyplot(fig)
+        # Coût total pondéré
+        cost_total = w_fuel * cost_fuel + w_time * cost_time + w_emiss * cost_co2
+
+        if best is None or cost_total < best["Coût total (€)"]:
+            best = {
+                "Vitesse optimale (km/h)": v,
+                "Temps total (h)": time_h,
+                "Coût total (€)": cost_total,
+                "Émissions CO₂ (kg)": emissions,
+            }
+
+    return best
+
+# -------------------------------
+# Application Streamlit
+# -------------------------------
+st.title("🚚 Assistant Intelligent d’Optimisation Logistique")
+
+st.sidebar.header("Paramètres")
+distance = st.sidebar.number_input("Distance du trajet (km)", 10, 1000, 300)
+fuel_price = st.sidebar.number_input("Prix carburant/énergie (€/L ou €/kWh)", 0.5, 3.0, 1.8, 0.1)
+driver_cost_h = st.sidebar.number_input("Coût horaire conducteur (€)", 10, 100, 25, 1)
+deadline_h = st.sidebar.number_input("Délai max (heures)", 1, 24, 4, 1)
+carbon_price = st.sidebar.number_input("Prix du CO₂ (€/kg)", 0.0, 1.0, 0.1, 0.01)
+
+v_min = st.sidebar.slider("Vitesse min (km/h)", 30, 60, 50)
+v_max = st.sidebar.slider("Vitesse max (km/h)", 80, 140, 120)
+
+margin_h = 10 / 60  # 10 minutes
+
+st.subheader("🔎 Recherche de la meilleure solution logistique")
+
+best_solution = None
+
+for mot in motorisations.keys():
+    for scen_name, weights in scenarios.items():
+        result = optimize_speeds(
+            distance, fuel_price, driver_cost_h,
+            v_min=v_min, v_max=v_max,
+            w_fuel=weights["w_fuel"], w_time=weights["w_time"], w_emiss=weights["w_emiss"],
+            motor=mot, carbon_price=carbon_price,
+            deadline_h=deadline_h
+        )
+
+        # Vérification stricte : toujours 10 minutes d'avance
+        if result["Temps total (h)"] <= deadline_h - margin_h:
+            result["Motorisation"] = mot
+            result["Scénario"] = scen_name
+
+            if best_solution is None or result["Coût total (€)"] < best_solution["Coût total (€)"]:
+                best_solution = result
+
+# -------------------------------
+# Résultat final
+# -------------------------------
+if best_solution:
+    st.success(f"✅ Solution optimale trouvée :")
+    st.write(f"- Motorisation : **{best_solution['Motorisation']}**")
+    st.write(f"- Scénario : **{best_solution['Scénario']}**")
+    st.write(f"- Vitesse optimale : **{best_solution['Vitesse optimale (km/h)']:.1f} km/h**")
+    st.write(f"- Temps total : **{best_solution['Temps total (h)']:.2f} h**")
+    st.write(f"- Coût total : **{best_solution['Coût total (€)']:.2f} €**")
+    st.write(f"- Émissions : **{best_solution['Émissions CO₂ (kg)']:.2f} kg**")
+else:
+    st.error("⚠️ Aucune solution ne respecte le délai avec 10 minutes d'avance obligatoire.")
