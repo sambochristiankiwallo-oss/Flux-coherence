@@ -1,35 +1,33 @@
-# 🚚 Assistant Intelligent d’Optimisation Logistique
+# 🚚 Algorithme du Flux - Optimisation Logistique
 
-Cette application **Streamlit** est un assistant d’aide à la décision logistique.  
-Elle optimise automatiquement les trajets de livraison en comparant plusieurs **motorisations** (Thermique, Hybride, Électrique) et différents **scénarios de conduite** (Éco, À l’heure, Express).  
-
-L’algorithme recherche la **solution la moins coûteuse** qui respecte les délais tout en imposant une contrainte stricte :  
-> ✅ Chaque livraison doit arriver **au moins 10 minutes avant le délai maximal fixé**.  
+Cette application **Streamlit** aide à trouver la meilleure solution logistique en comparant **temps de livraison, coût et émissions**.  
+Elle prend en compte plusieurs scénarios : **Diesel, Hybride, Électrique**, avec différentes stratégies (Rapide, Normal, Éco).  
 
 ---
 
-## ⚡ Fonctionnalités
-
-- Simulation de trajets logistiques avec paramètres ajustables :  
-  - Distance du trajet  
-  - Prix carburant / énergie (€)  
-  - Coût horaire du conducteur (€)  
-  - Prix du CO₂ (€ / kg)  
-  - Délai maximum (avec 10 minutes d’avance obligatoire)  
-
-- Comparaison automatique de :  
-  - **Motorisations** : Thermique, Hybride, Électrique  
-  - **Scénarios logistiques** : Éco, À l’heure, Express  
-
-- Résultats clairs et détaillés :  
-  - Vitesse optimale  
-  - Temps total (h)  
-  - Coût total (€)  
-  - Émissions CO₂ (kg)  
-  - Motorisation & scénario retenus  
-
-- Sélection automatique de la **meilleure solution logistique**.  
+## ✨ Fonctionnalités
+- Entrée des paramètres logistiques (distance, délai, etc.)
+- Calcul automatique des temps, coûts et émissions
+- Comparaison de plusieurs solutions logistiques
+- Sélection de la **meilleure option optimisée**
+- Visualisation avec graphiques interactifs
 
 ---
 
-## 📊 Exemple de Résultat
+## 🔧 Installation locale (optionnel)
+
+```bash
+# Cloner le projet
+git clone https://github.com/TON-REPO/optimisation-logistique.git
+cd optimisation-logistique
+
+# Créer un environnement virtuel
+python -m venv venv
+source venv/bin/activate   # sous Linux/Mac
+venv\Scripts\activate      # sous Windows
+
+# Installer les dépendances
+pip install -r requirements.txt
+
+# Lancer l'application
+streamlit run streamlit_app.py
