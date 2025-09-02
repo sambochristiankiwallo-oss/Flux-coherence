@@ -31,3 +31,11 @@ Elle peut également générer un **rapport PDF** détaillé pour appuyer la pri
 ```bash
 git clone https://github.com/ton-compte/ton-repo.git
 cd ton-repo
+
+###2.Creer un environnement virtuel
+python -m venv venv
+source venv/bin/activate   # macOS/Linux
+venv\Scripts\activate      # Windows
+
+###3.Installer les dépendances
+pip install -r requirements.txt
