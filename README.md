@@ -39,3 +39,10 @@ venv\Scripts\activate      # Windows
 
 ###3.Installer les dépendances
 pip install -r requirements.txt
+
+
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://mogock-flux-coherence.streamlit.app)
+
+## 📬 Contact
+Créé avec ❤️ par [Christian Sambo Kiwallo]  
+📧 Email : sambochristiankiwallo@gmail.com  
