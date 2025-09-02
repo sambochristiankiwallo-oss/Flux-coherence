@@ -1,33 +1,33 @@
-# 🚚 Algorithme du Flux - Optimisation Logistique
+# 🚚 Assistant Intelligent d’Optimisation Logistique
 
-Cette application **Streamlit** aide à trouver la meilleure solution logistique en comparant **temps de livraison, coût et émissions**.  
-Elle prend en compte plusieurs scénarios : **Diesel, Hybride, Électrique**, avec différentes stratégies (Rapide, Normal, Éco).  
+Cette application aide à comparer différentes solutions logistiques (**Diesel, Hybride, Électrique**) et recommande automatiquement la **solution optimale** en fonction de trois critères principaux :  
+- ⏱️ Temps de livraison  
+- 💰 Coût total  
+- 🌱 Émissions de CO₂  
+
+Elle peut également générer un **rapport PDF** détaillé pour appuyer la prise de décision.
 
 ---
 
 ## ✨ Fonctionnalités
-- Entrée des paramètres logistiques (distance, délai, etc.)
-- Calcul automatique des temps, coûts et émissions
-- Comparaison de plusieurs solutions logistiques
-- Sélection de la **meilleure option optimisée**
-- Visualisation avec graphiques interactifs
+
+✅ Comparaison des motorisations (Diesel, Hybride, Électrique)  
+✅ Analyse automatique pour trouver la solution optimale  
+✅ Visualisation graphique : Temps, Coût, Émissions  
+✅ Génération et téléchargement d’un rapport PDF personnalisé  
+✅ Interface simple et intuitive via **Streamlit**  
 
 ---
 
-## 🔧 Installation locale (optionnel)
+## 🚀 Démo en ligne
 
+👉 [Lancer l’application sur Streamlit Cloud](https://share.streamlit.io) *(lien à remplacer par ton vrai déploiement)*
+
+---
+
+## 📦 Installation locale
+
+### 1. Cloner le projet
 ```bash
-# Cloner le projet
-git clone https://github.com/TON-REPO/optimisation-logistique.git
-cd optimisation-logistique
-
-# Créer un environnement virtuel
-python -m venv venv
-source venv/bin/activate   # sous Linux/Mac
-venv\Scripts\activate      # sous Windows
-
-# Installer les dépendances
-pip install -r requirements.txt
-
-# Lancer l'application
-streamlit run streamlit_app.py
+git clone https://github.com/ton-compte/ton-repo.git
+cd ton-repo
