@@ -1,24 +1,39 @@
-# 🚚 Flux Logistique Intelligent  
+# 🚚 Assistant Intelligent d’Optimisation Logistique
 
-## 🇫🇷 Description (Français)  
-Cette application est un **assistant intelligent d’optimisation logistique** développé avec **Streamlit**.  
-Elle permet de comparer plusieurs scénarios de livraison en fonction de :  
-- ⛽ **Coût du carburant** (essence, diesel, hybride, électrique)  
-- ⏱️ **Temps de trajet** et respect des délais  
-- 🌍 **Pollution (émissions de CO₂)**  
-- 📦 **Adaptation aux types de marchandises**  
-- 🛠️ **Maintenance et autonomie des véhicules**  
+## 📌 Description
+Cette application aide les entreprises de transport et de logistique à **planifier efficacement leurs livraisons** en tenant compte de :
+- ⏱️ Délais de livraison (avec obligation d’être 15 minutes en avance)  
+- 💰 Coûts réels (FCFA, basé sur consommation et carburant/électricité)  
+- 🌱 Impact environnemental (CO₂ émis ou zéro émission pour véhicules électriques)  
+- 📦 Nature des marchandises (périssables, dangereux, standard)  
+- ⚡ Autonomie et capacité de chaque véhicule  
+- 🚦 Conditions de route et trafic  
 
-### ✅ Fonctionnalités principales  
-1. Analyse comparative de plusieurs solutions :  
-   - La **moins chère**  
-   - La **plus rapide**  
-   - La **moins polluante**  
-   - La **mieux adaptée aux marchandises**  
-2. Génération d’un **score logistique global** prenant en compte coûts, délais, pollution et capacité.  
-3. Export des résultats sous forme de **PDF avec graphiques et tableaux**.  
+L’application compare plusieurs motorisations (**essence, diesel, hybride, électrique, moto, tricycle, camion**) et propose :  
+- La **solution la moins coûteuse** 💰  
+- La **solution la moins polluante** 🌱  
+- La **solution la plus rapide** ⏱️  
+- La **solution globale optimale** (pondération coût/CO₂/temps)  
 
-### 🚀 Lancer l’application localement  
+Enfin, un **rapport PDF détaillé** est généré, avec :  
+- Un résumé des meilleures solutions  
+- Une liste détaillée par véhicule (coût, CO₂, temps, score)  
+- Un graphique comparatif 📊  
+
+---
+
+## 🚀 Fonctionnalités principales
+- Entrée manuelle de la distance **ou** calcul automatique via coordonnées GPS (Haversine)  
+- Saisie du poids, type de marchandise, type de route, trafic  
+- Pondération personnalisée des critères (coût, CO₂, temps)  
+- Graphiques interactifs et tableau comparatif  
+- Génération d’un PDF exportable avec résultats + graphiques  
+
+---
+
+## ⚙️ Installation
+
+1. Clonez le dépôt :
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+git clone https://github.com/ton-compte/ton-repo.git
+cd ton-repo
