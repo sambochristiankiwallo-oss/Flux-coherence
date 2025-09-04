@@ -21,7 +21,7 @@ Elle peut également générer un **rapport PDF** détaillé pour appuyer la pri
 
 ## 🚀 Démo en ligne
 
-👉 [Lancer l’application sur Streamlit Cloud](https://share.streamlit.io) *(lien à remplacer par ton vrai déploiement)*
+👉 [Lancer l’application sur Streamlit Cloud](https://share.streamlit.io) *(https://mogock-flux-coherence.streamlit.app/)*
 
 ---
 
