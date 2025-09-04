@@ -1,39 +1,33 @@
-# 🚚 Assistant Intelligent d’Optimisation Logistique
+# Assistant Logistique Intelligent
 
 ## 📌 Description
-Cette application aide les entreprises de transport et de logistique à **planifier efficacement leurs livraisons** en tenant compte de :
-- ⏱️ Délais de livraison (avec obligation d’être 15 minutes en avance)  
-- 💰 Coûts réels (FCFA, basé sur consommation et carburant/électricité)  
-- 🌱 Impact environnemental (CO₂ émis ou zéro émission pour véhicules électriques)  
-- 📦 Nature des marchandises (périssables, dangereux, standard)  
-- ⚡ Autonomie et capacité de chaque véhicule  
-- 🚦 Conditions de route et trafic  
+Cette application aide à optimiser la logistique en proposant des solutions adaptées selon plusieurs critères :  
+- 🚚 Type de véhicule (moto, tricycle, voiture, camion, thermique, hybride, électrique)  
+- ⚡ Consommation et coût énergétique (FCFA/km)  
+- 🌍 Impact environnemental (émissions de CO₂)  
+- ⏱️ Délais de livraison (respect avec marge de sécurité)  
+- 📦 Nature et poids de la marchandise (alimentaire, fragile, périssable, général)  
+- 🏆 Analyse multicritère avec meilleure solution : la moins coûteuse, la moins polluante, la plus rapide, et la plus adaptée  
 
-L’application compare plusieurs motorisations (**essence, diesel, hybride, électrique, moto, tricycle, camion**) et propose :  
-- La **solution la moins coûteuse** 💰  
-- La **solution la moins polluante** 🌱  
-- La **solution la plus rapide** ⏱️  
-- La **solution globale optimale** (pondération coût/CO₂/temps)  
-
-Enfin, un **rapport PDF détaillé** est généré, avec :  
-- Un résumé des meilleures solutions  
-- Une liste détaillée par véhicule (coût, CO₂, temps, score)  
-- Un graphique comparatif 📊  
+L’application génère également un **rapport PDF avec tableaux et graphiques**.
 
 ---
 
-## 🚀 Fonctionnalités principales
-- Entrée manuelle de la distance **ou** calcul automatique via coordonnées GPS (Haversine)  
-- Saisie du poids, type de marchandise, type de route, trafic  
-- Pondération personnalisée des critères (coût, CO₂, temps)  
-- Graphiques interactifs et tableau comparatif  
-- Génération d’un PDF exportable avec résultats + graphiques  
+## 🚀 Démo en ligne
+👉 [Lien vers l’application]( https://mogock-flux-coherence.streamlit.app/)
 
 ---
 
-## ⚙️ Installation
+## 📖 Fonctionnalités principales
+- Saisie des paramètres personnalisés par l’utilisateur  
+- Comparaison entre différentes motorisations  
+- Visualisation sous forme de **tableaux** et **diagrammes**  
+- Export automatique d’un **rapport PDF** avec recommandations  
 
-1. Clonez le dépôt :
-```bash
-git clone https://github.com/ton-compte/ton-repo.git
-cd ton-repo
+---
+
+## ⚙️ Installation locale
+1. Clone ce dépôt :
+   ```bash
+   git clone https://github.com/TON_COMPTE/TON_REPO.git
+   cd TON_REPO
