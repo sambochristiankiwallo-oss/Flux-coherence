@@ -1,48 +1,32 @@
 # 🚚 Assistant Intelligent d’Optimisation Logistique
 
-Cette application aide à comparer différentes solutions logistiques (**Diesel, Hybride, Électrique**) et recommande automatiquement la **solution optimale** en fonction de trois critères principaux :  
-- ⏱️ Temps de livraison  
-- 💰 Coût total  
-- 🌱 Émissions de CO₂  
+Bienvenue dans **l’Assistant Intelligent d’Optimisation Logistique**, une application interactive développée avec [Streamlit](https://streamlit.io/).
 
-Elle peut également générer un **rapport PDF** détaillé pour appuyer la prise de décision.
+Cette application aide à **planifier et optimiser** vos livraisons en fonction de la distance, du délai maximum, et du type de véhicule (thermique, hybride, électrique).  
+Elle propose toujours la solution la plus **rentable**, **rapide**, et **respectueuse du délai**, avec une marge de 15 minutes minimum.
 
 ---
 
 ## ✨ Fonctionnalités
-
-✅ Comparaison des motorisations (Diesel, Hybride, Électrique)  
-✅ Analyse automatique pour trouver la solution optimale  
-✅ Visualisation graphique : Temps, Coût, Émissions  
-✅ Génération et téléchargement d’un rapport PDF personnalisé  
-✅ Interface simple et intuitive via **Streamlit**  
+- 📥 **Entrée personnalisée** : distance, délai, marchandises.  
+- 📊 **Comparaison automatique** des options (thermique, hybride, électrique).  
+- 📈 **Graphique visuel** des résultats.  
+- 📄 **Téléchargement d’un rapport PDF** personnalisé.  
+- ✅ Vérifie toujours que les solutions proposées respectent le délai avec 15 minutes de marge.  
 
 ---
 
 ## 🚀 Démo en ligne
-
-👉 [Lancer l’application sur Streamlit Cloud](https://share.streamlit.io) *(https://mogock-flux-coherence.streamlit.app/)*
+👉 [Cliquez ici pour accéder à l’application](https://ton-lien-streamlit)  
+*(remplace ce lien par ton vrai lien Streamlit Cloud une fois déployé)*
 
 ---
 
-## 📦 Installation locale
+## 🖥️ Installation locale
 
-### 1. Cloner le projet
+Si vous souhaitez exécuter l’application localement :  
+
+### 1. Cloner le dépôt
 ```bash
-git clone https://github.com/ton-compte/ton-repo.git
+git clone https://github.com/ton-nom-utilisateur/ton-repo.git
 cd ton-repo
-
-###2.Creer un environnement virtuel
-python -m venv venv
-source venv/bin/activate   # macOS/Linux
-venv\Scripts\activate      # Windows
-
-###3.Installer les dépendances
-pip install -r requirements.txt
-
-
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://mogock-flux-coherence.streamlit.app)
-
-## 📬 Contact
-Créé avec ❤️ par [Christian Sambo Kiwallo]  
-📧 Email : sambochristiankiwallo@gmail.com  
