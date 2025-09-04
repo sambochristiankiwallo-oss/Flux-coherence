@@ -14,10 +14,10 @@ from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak
 )
 
-# -------------------------------
-# Haversine (distance entre 2 lat/lon en km)
-# -------------------------------
+# =============== Utilitaires ===============
+
 def haversine(lat1, lon1, lat2, lon2):
+    """Distance (km) entre 2 points lat/lon sur la sphère (formule de Haversine)."""
     R = 6371.0
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
@@ -26,9 +26,20 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2*math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R*c
 
-# -------------------------------
-# Paramètres véhicules (coûts en FCFA, conso : essence/diesel en L/km, élec en kWh/km)
-# -------------------------------
+def vitesse_effective(base, trafic):
+    if trafic == "Faible": return base
+    if trafic == "Moyen":  return base * 0.85
+    return base * 0.70
+
+def normalize_minmax(s: pd.Series) -> pd.Series:
+    mn, mx = s.min(), s.max()
+    if mx - mn < 1e-9:
+        return pd.Series([0.5]*len(s), index=s.index)
+    return (s - mn) / (mx - mn)
+
+# =============== Paramètres véhicules ===============
+# conso : L/km (essence/diesel) ou kWh/km (élec)
+# prix : FCFA par L (695 essence, 720 diesel) ou par kWh (109)
 vehicles = {
     "Moto essence":        {"energie": "essence", "conso": 0.035, "co2": 0.08, "autonomie": 300, "capacite": 50,   "vitesse": 60, "prix": 695},
     "Moto électrique":     {"energie": "elec",    "conso": 0.025, "co2": 0.02, "autonomie": 120, "capacite": 40,   "vitesse": 65, "prix": 109},
@@ -42,14 +53,12 @@ vehicles = {
     "Camion électrique":   {"energie": "elec",    "conso": 1.200, "co2": 0.20, "autonomie": 400, "capacite": 8000, "vitesse": 65, "prix": 109},
 }
 
-ADVANCE_HOURS = 0.25  # 15 minutes d'avance obligatoire
+ADVANCE_HOURS = 0.25  # 15 minutes d'avance obligatoires
 
-# -------------------------------
-# UI
-# -------------------------------
+# =============== Interface ===============
 st.set_page_config(page_title="Assistant Logistique Intelligent", page_icon="🚚", layout="wide")
 st.title("🚚 Assistant Intelligent d’Optimisation Logistique")
-st.caption("Compare coût 💰, délai ⏱️, émissions 🌍 et génère un rapport PDF complet.")
+st.caption("Compare coût 💰, délai ⏱️, émissions 🌍 et exporte un rapport PDF complet.")
 
 with st.sidebar:
     st.header("⚙️ Paramètres")
@@ -80,46 +89,40 @@ with st.sidebar:
 
 lancer = st.button("🚀 Lancer la simulation")
 
-# -------------------------------
-# Helpers
-# -------------------------------
-def vitesse_effective(base, trafic):
-    if trafic == "Faible": return base
-    if trafic == "Moyen":  return base * 0.85
-    return base * 0.70
+# =============== Contraintes fines ===============
 
 def constraints_ok(row):
-    # délai avec 15 min d'avance
+    # Délai avec 15 min d'avance
     if row["Temps (h)"] > max(0.0, deadline - ADVANCE_HOURS):
         return False
-    # périssable -> préférence temps court (exemple : <= 3h si possible)
+    # Périssable -> exiger temps court
     if marchandise == "Périssable" and row["Temps (h)"] > 3.0:
         return False
-    # dangereux -> pas de moto/tricycle
+    # Dangereux -> éviter deux-roues/triporteurs
     if marchandise == "Dangereux" and ("Moto" in row["Véhicule"] or "Tricycle" in row["Véhicule"]):
         return False
     return True
 
-# -------------------------------
-# Simulation
-# -------------------------------
+# =============== Simulation ===============
+
 if lancer:
     results = []
     for name, v in vehicles.items():
         if name not in vehicle_filter:
             continue
-        # capacité
+
+        # Capacité & autonomie
         if poids > v["capacite"]:
             continue
-        # autonomie (si définie)
         if v["autonomie"] is not None and distance > v["autonomie"]:
             continue
 
-        # coût énergie
-        conso = distance * v["conso"]         # L ou kWh
-        cout = conso * v["prix"]              # FCFA
-        co2  = conso * v["co2"]               # kg CO2 (facteur simplifié)
-        # temps
+        # Conso / coût / CO2
+        conso = distance * v["conso"]          # L ou kWh
+        cout  = conso * v["prix"]              # FCFA
+        co2   = conso * v["co2"]               # kg CO2 (facteur simplifié)
+
+        # Temps (avec trafic)
         v_eff = max(5.0, vitesse_effective(v["vitesse"], trafic))
         temps = distance / v_eff
 
@@ -134,28 +137,22 @@ if lancer:
         st.warning("Aucune option ne satisfait les contraintes initiales (capacité/autonomie/filtre).")
     else:
         df = pd.DataFrame(results)
-
-        # Appliquer contraintes « fines »
         df["Faisable"] = df.apply(constraints_ok, axis=1)
-        dfF = df[df["Faisable"]].copy()
 
-        st.subheader("📊 Résultats")
+        st.subheader("📊 Résultats (toutes options calculées)")
         st.dataframe(df.sort_values(["Faisable","Coût (FCFA)"], ascending=[False, True]), use_container_width=True)
 
+        dfF = df[df["Faisable"]].copy()
         if dfF.empty:
             st.error("Aucune solution ne respecte le délai (avec 15 min d’avance) et les contraintes marchandise.")
         else:
-            # Score global (à minimiser)
-            # normalisation min-max par colonne pour comparabilité
-            def norm(s):
-                mn, mx = s.min(), s.max()
-                if mx - mn < 1e-9: return pd.Series([0.5]*len(s), index=s.index)
-                return (s - mn) / (mx - mn)
-
-            dfF["_n_cost"] = norm(dfF["Coût (FCFA)"])
-            dfF["_n_co2"]  = norm(dfF["CO₂ (kg)"])
-            dfF["_n_time"] = norm(dfF["Temps (h)"])
-            dfF["Score global"] = (w_cost*dfF["_n_cost"] + w_co2*dfF["_n_co2"] + w_time*dfF["_n_time"])
+            # Score global (à minimiser) avec normalisation min-max
+            dfF["_n_cost"] = normalize_minmax(dfF["Coût (FCFA)"])
+            dfF["_n_co2"]  = normalize_minmax(dfF["CO₂ (kg)"])
+            dfF["_n_time"] = normalize_minmax(dfF["Temps (h)"])
+            dfF["Score global"] = (w_cost*dfF["_n_cost"] +
+                                   w_co2*dfF["_n_co2"] +
+                                   w_time*dfF["_n_time"])
 
             # Meilleures solutions
             best_cost  = dfF.loc[dfF["Coût (FCFA)"].idxmin()]
@@ -170,21 +167,23 @@ if lancer:
             st.success(f"🤖 Meilleure au global : **{best_score['Véhicule']}** — score {round(best_score['Score global'],3)}")
 
             # Graphique comparatif
-            st.subheader("📈 Comparaison (Coût / CO₂ / Temps)")
+            st.subheader("📈 Comparaison (Coût / CO₂ / Temps) — options faisables")
             fig, ax = plt.subplots()
             df_plot = dfF.set_index("Véhicule")[["Coût (FCFA)","CO₂ (kg)","Temps (h)"]]
-            df_plot.plot(kind="bar", ax=ax)
+            df_plot.plot(kind="bar", ax=ax)  # pas de couleurs spécifiées
             ax.set_title("Comparaison des critères")
             ax.set_ylabel("Valeurs")
             ax.tick_params(axis='x', labelrotation=45)
             st.pyplot(fig)
 
-            # -----------------------------------------
-            # PDF : résumé + tableau best + graphique + liste détaillée
-            # -----------------------------------------
-            def build_pdf(dataframe, bests, chart_fig):
+            # =============== PDF ===============
+            def build_pdf(dataframe_faisable, bests_dict, chart_fig):
                 buf = BytesIO()
-                doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.5*cm, rightMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+                doc = SimpleDocTemplate(
+                    buf, pagesize=A4,
+                    leftMargin=1.5*cm, rightMargin=1.5*cm,
+                    topMargin=1.5*cm, bottomMargin=1.5*cm
+                )
                 styles = getSampleStyleSheet()
                 title = styles["Title"]
                 h2 = styles["Heading2"]
@@ -192,21 +191,29 @@ if lancer:
                 bullet = ParagraphStyle('bullet', parent=p, bulletIndent=0, leftIndent=12)
 
                 elems = []
+                # En-tête
                 elems.append(Paragraph("Rapport d’Optimisation Logistique", title))
                 elems.append(Spacer(1, 6))
-                elems.append(Paragraph(f"Distance : {distance:.2f} km — Délai max : {deadline:.2f} h (avance requise : 15 min)",
-                                       styles["Italic"]))
-                elems.append(Paragraph(f"Trafic : {trafic} — Route : {route} — Marchandise : {marchandise} — Poids : {poids} kg", styles["Italic"]))
-                elems.append(Spacer(1, 8))
+                elems.append(Paragraph(
+                    f"Distance : {distance:.2f} km — Délai max : {deadline:.2f} h (avance requise : 15 min)",
+                    styles["Italic"]
+                ))
+                elems.append(Paragraph(
+                    f"Trafic : {trafic} — Route : {route} — Marchandise : {marchandise} — Poids : {poids} kg",
+                    styles["Italic"]
+                ))
+                elems.append(Spacer(1, 10))
 
-                # Tableau récapitulatif des meilleures solutions
+                # Tableau meilleures solutions
                 elems.append(Paragraph("Meilleures solutions par critère", h2))
-                best_table_data = [
-                    ["Critère", "Véhicule", "Coût (FCFA)", "CO₂ (kg)", "Temps (h)"]
-                ]
-                for label, row in bests.items():
+                best_table_data = [["Critère", "Véhicule", "Coût (FCFA)", "CO₂ (kg)", "Temps (h)"]]
+                for label, row in bests_dict.items():
                     best_table_data.append([
-                        label, row["Véhicule"], f"{row['Coût (FCFA)']}", f"{row['CO₂ (kg)']}", f"{row['Temps (h)']}"
+                        label,
+                        row["Véhicule"],
+                        f"{row['Coût (FCFA)']}",
+                        f"{row['CO₂ (kg)']}",
+                        f"{row['Temps (h)']}",
                     ])
                 tbl = Table(best_table_data, repeatRows=1)
                 tbl.setStyle(TableStyle([
@@ -215,6 +222,7 @@ if lancer:
                     ("GRID", (0,0), (-1,-1), 0.4, colors.grey),
                     ("ALIGN", (2,1), (-1,-1), "CENTER"),
                     ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
+                    ("FONTSIZE", (0,0), (-1,-1), 9),
                 ]))
                 elems.append(tbl)
                 elems.append(Spacer(1, 10))
@@ -229,13 +237,14 @@ if lancer:
                 elems.append(PageBreak())
 
                 # Liste détaillée par véhicule
-                elems.append(Paragraph("Détails par véhicule", h2))
-                df_list = dataframe.sort_values("Coût (FCFA)").reset_index(drop=True)
+                elems.append(Paragraph("Détails par véhicule (options faisables)", h2))
+                df_list = dataframe_faisable[["Véhicule","Coût (FCFA)","CO₂ (kg)","Temps (h)","Score global"]].sort_values("Coût (FCFA)").reset_index(drop=True)
                 for _, r in df_list.iterrows():
                     elems.append(Paragraph(f"• <b>{r['Véhicule']}</b>", p))
                     elems.append(Paragraph(f"&nbsp;&nbsp;&nbsp;Coût total : {r['Coût (FCFA)']} FCFA", bullet))
                     elems.append(Paragraph(f"&nbsp;&nbsp;&nbsp;Émissions CO₂ : {r['CO₂ (kg)']} kg", bullet))
                     elems.append(Paragraph(f"&nbsp;&nbsp;&nbsp;Temps estimé : {r['Temps (h)']} h", bullet))
+                    elems.append(Paragraph(f"&nbsp;&nbsp;&nbsp;Score global : {round(r['Score global'],3)}", bullet))
                     elems.append(Spacer(1, 4))
 
                 doc.build(elems)
@@ -248,7 +257,7 @@ if lancer:
                 "⚡ Plus rapide": best_time,
                 "🤖 Meilleure globale": best_score
             }
-            pdf_buffer = build_pdf(dfF[["Véhicule","Coût (FCFA)","CO₂ (kg)","Temps (h)"]], bests, fig)
+            pdf_buffer = build_pdf(dfF.copy(), bests, fig)
 
             st.download_button(
                 "📥 Télécharger le rapport PDF",
