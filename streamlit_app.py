@@ -21,8 +21,8 @@ vehicules = {
     "Camion hybride": {"conso": 0.28, "type": "hybride", "capacite": 19000},
 }
 
-prix = {"diesel": 720, "essence": 695, "electrique": 109}
-emissions = {"diesel": 2.68, "essence": 2.31, "electrique": 0.1}
+prix = {"diesel": 720, "essence": 695, "electrique": 109}  # FCFA
+emissions = {"diesel": 2.68, "essence": 2.31, "electrique": 0.1}  # kg CO2 par litre/kWh
 
 vitesses = {
     "Moto électrique": 50,
@@ -43,7 +43,7 @@ def calculer_solutions(distance, poids, delai_max):
 
     for nom, data in vehicules.items():
         if poids > data["capacite"]:
-            continue
+            continue  # Poids trop élevé
 
         conso = data["conso"] * distance
         if data["type"] == "diesel":
@@ -58,8 +58,8 @@ def calculer_solutions(distance, poids, delai_max):
 
         temps = distance / vitesses[nom]
 
-        # Vérification délai (toujours 10 min d’avance)
-        if temps >= delai_max - 0.25:  # 0.25h = 15min
+        # Vérification délai (au moins 10 min d’avance)
+        if temps >= delai_max - (10 / 60):  # 10 min = 0.1667h
             continue
 
         resultats.append({
