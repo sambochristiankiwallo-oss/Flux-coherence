@@ -4,3 +4,6 @@ backgroundColor="#FFFFFF"          # Fond blanc
 secondaryBackgroundColor="#F5F7FA" # Fond des encadrés
 textColor="#000000"                # Texte en noir
 font="sans serif"                  # Police moderne et lisible
+[server]
+enableCORS = false
+enableXsrfProtection = false
