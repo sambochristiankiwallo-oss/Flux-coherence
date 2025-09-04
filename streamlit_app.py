@@ -1,164 +1,152 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet
-import os
+from reportlab.lib import colors
 
-# --------------------------
-# Données véhicules
-# --------------------------
+# -------------------------------
+# Paramètres des motorisations
+# -------------------------------
 vehicules = {
-    "Moto électrique": {"conso": 0.05, "type": "electrique", "capacite": 50},
-    "Tricycle électrique": {"conso": 0.08, "type": "electrique", "capacite": 1000},
-    "Voiture électrique": {"conso": 0.18, "type": "electrique", "capacite": 3000},
-    "Camion électrique": {"conso": 1.2, "type": "electrique", "capacite": 19000},
-    "Voiture diesel": {"conso": 0.07, "type": "diesel", "capacite": 3000},
-    "Camion diesel": {"conso": 0.35, "type": "diesel", "capacite": 19000},
-    "Voiture hybride": {"conso": 0.05, "type": "hybride", "capacite": 3000},
-    "Camion hybride": {"conso": 0.28, "type": "hybride", "capacite": 19000},
+    "Moto électrique": {"conso_kWh_km": 0.05, "capacité": 50, "vitesse": 50, "type": "électrique"},
+    "Tricycle électrique": {"conso_kWh_km": 0.1, "capacité": 1000, "vitesse": 40, "type": "électrique"},
+    "Voiture électrique": {"conso_kWh_km": 0.18, "capacité": 3000, "vitesse": 70, "type": "électrique"},
+    "Voiture diesel": {"conso_L_km": 0.07, "capacité": 3000, "vitesse": 70, "type": "diesel"},
+    "Voiture hybride": {"conso_L_km": 0.05, "conso_kWh_km": 0.05, "capacité": 3000, "vitesse": 70, "type": "hybride"},
+    "Camion diesel": {"conso_L_km": 0.3, "capacité": 19000, "vitesse": 60, "type": "diesel"},
+    "Camion hybride": {"conso_L_km": 0.2, "conso_kWh_km": 0.15, "capacité": 19000, "vitesse": 60, "type": "hybride"},
+    "Camion électrique": {"conso_kWh_km": 1.2, "capacité": 19000, "vitesse": 60, "type": "électrique"},
 }
 
-prix = {"diesel": 720, "essence": 695, "electrique": 109}  # FCFA
-emissions = {"diesel": 2.68, "essence": 2.31, "electrique": 0.1}  # kg CO2 par litre/kWh
+# Coûts en FCFA
+prix = {"diesel": 720, "essence": 695, "kWh": 109}
 
-vitesses = {
-    "Moto électrique": 50,
-    "Tricycle électrique": 40,
-    "Voiture électrique": 70,
-    "Camion électrique": 60,
-    "Voiture diesel": 80,
-    "Camion diesel": 70,
-    "Voiture hybride": 75,
-    "Camion hybride": 65,
-}
+# Émissions CO2 (kg par unité)
+emissions = {"diesel": 2.68, "essence": 2.31, "kWh": 0.05}
 
-# --------------------------
-# Calculs logistiques
-# --------------------------
-def calculer_solutions(distance, poids, delai_max):
+# -------------------------------
+# Fonctions de calcul
+# -------------------------------
+def calculer_resultats(distance, poids, delai_max):
     resultats = []
 
     for nom, data in vehicules.items():
-        if poids > data["capacite"]:
-            continue  # Poids trop élevé
-
-        conso = data["conso"] * distance
-        if data["type"] == "diesel":
-            cout = conso * prix["diesel"]
-            emission = conso * emissions["diesel"]
-        elif data["type"] == "hybride":
-            cout = conso * ((prix["diesel"] + prix["essence"]) / 2)
-            emission = conso * ((emissions["diesel"] + emissions["essence"]) / 2)
-        else:  # électrique
-            cout = conso * prix["electrique"]
-            emission = conso * emissions["electrique"]
-
-        temps = distance / vitesses[nom]
-
-        # Vérification délai (au moins 10 min d’avance)
-        if temps >= delai_max - (10 / 60):  # 10 min = 0.1667h
+        if poids > data["capacité"]:
             continue
 
+        temps_h = distance / data["vitesse"]
+
+        # Vérifier délai avec marge de 10 min
+        if temps_h > delai_max - (10/60):
+            continue
+
+        cout, co2 = 0, 0
+        if data["type"] == "diesel":
+            cout = distance * data["conso_L_km"] * prix["diesel"]
+            co2 = distance * data["conso_L_km"] * emissions["diesel"]
+        elif data["type"] == "électrique":
+            cout = distance * data["conso_kWh_km"] * prix["kWh"]
+            co2 = distance * data["conso_kWh_km"] * emissions["kWh"]
+        elif data["type"] == "hybride":
+            cout = distance * (data["conso_L_km"] * prix["essence"] + data["conso_kWh_km"] * prix["kWh"])
+            co2 = distance * (data["conso_L_km"] * emissions["essence"] + data["conso_kWh_km"] * emissions["kWh"])
+
         resultats.append({
-            "Motorisation": nom,
+            "Véhicule": nom,
             "Coût (FCFA)": round(cout, 2),
-            "Temps (h)": round(temps, 2),
-            "Émissions (kg CO2)": round(emission, 2),
+            "Temps (h)": round(temps_h, 2),
+            "Émissions CO2 (kg)": round(co2, 2),
+            "Score global": round(cout*0.5 + co2*0.3 + temps_h*0.2, 2)
         })
 
-    df = pd.DataFrame(resultats)
+    return pd.DataFrame(resultats)
 
+def meilleures_solutions(df):
     meilleures = {}
-    if not df.empty:
-        meilleures["Moins coûteuse"] = df.loc[df["Coût (FCFA)"].idxmin(), "Motorisation"]
-        meilleures["Plus rapide"] = df.loc[df["Temps (h)"].idxmin(), "Motorisation"]
-        meilleures["Moins polluante"] = df.loc[df["Émissions (kg CO2)"].idxmin(), "Motorisation"]
+    if df.empty:
+        return meilleures
+    meilleures["💰 Moins coûteuse"] = df.loc[df["Coût (FCFA)"].idxmin()]["Véhicule"]
+    meilleures["⚡ Plus rapide"] = df.loc[df["Temps (h)"].idxmin()]["Véhicule"]
+    meilleures["🌍 Moins polluante"] = df.loc[df["Émissions CO2 (kg)"].idxmin()]["Véhicule"]
+    meilleures["⭐ Équilibrée"] = df.loc[df["Score global"].idxmin()]["Véhicule"]
+    return meilleures
 
-    return df, meilleures
-
-# --------------------------
-# Génération PDF
-# --------------------------
 def generer_pdf(df, distance, poids, delai_max, meilleures):
-    doc = SimpleDocTemplate("rapport_logistique.pdf", pagesize=A4)
+    fichier_pdf = "rapport_logistique.pdf"
+    doc = SimpleDocTemplate(fichier_pdf, pagesize=A4)
     styles = getSampleStyleSheet()
-    elements = []
+    story = []
 
-    elements.append(Paragraph("Rapport d’Optimisation Logistique", styles['Title']))
-    elements.append(Spacer(1, 12))
+    story.append(Paragraph("📦 Rapport Logistique Intelligent", styles['Title']))
+    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"Distance : {distance} km", styles['Normal']))
+    story.append(Paragraph(f"Poids : {poids} kg", styles['Normal']))
+    story.append(Paragraph(f"Délai max : {delai_max} h", styles['Normal']))
+    story.append(Spacer(1, 12))
 
-    resume = f"Distance : {distance} km<br/>Poids : {poids} kg<br/>Délai maximum : {delai_max} h"
-    elements.append(Paragraph(resume, styles['Normal']))
-    elements.append(Spacer(1, 12))
+    # Tableau
+    data_table = [list(df.columns)] + df.values.tolist()
+    table = Table(data_table)
+    table.setStyle(TableStyle([("BACKGROUND", (0,0), (-1,0), colors.grey),
+                               ("TEXTCOLOR", (0,0), (-1,0), colors.whitesmoke),
+                               ("ALIGN", (0,0), (-1,-1), "CENTER"),
+                               ("GRID", (0,0), (-1,-1), 1, colors.black)]))
+    story.append(table)
+    story.append(Spacer(1, 12))
 
-    if not df.empty:
-        tableau_data = [df.columns.tolist()] + df.fillna("").values.tolist()
-        table = Table(tableau_data)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.grey),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('GRID', (0,0), (-1,-1), 1, colors.black),
-        ]))
-        elements.append(table)
-        elements.append(Spacer(1, 12))
+    # Graphiques
+    for col, titre in [("Coût (FCFA)", "Comparaison des coûts"),
+                       ("Temps (h)", "Comparaison des temps"),
+                       ("Émissions CO2 (kg)", "Comparaison des émissions")]:
+        plt.figure()
+        df.plot(x="Véhicule", y=col, kind="bar", legend=False)
+        plt.ylabel(col)
+        plt.title(titre)
+        plt.tight_layout()
+        img_path = f"{col}.png"
+        plt.savefig(img_path)
+        plt.close()
+        story.append(Image(img_path, width=400, height=200))
+        story.append(Spacer(1, 12))
 
-        for col in ["Coût (FCFA)", "Temps (h)", "Émissions (kg CO2)"]:
-            if df[col].notnull().any():
-                plt.figure()
-                df[df[col].notnull()].plot(x="Motorisation", y=col, kind="bar", legend=False)
-                plt.title(col)
-                plt.ylabel(col)
-                plt.tight_layout()
-                filename = f"temp_{col}.png"
-                plt.savefig(filename)
-                plt.close()
-                elements.append(Image(filename, width=400, height=200))
-                elements.append(Spacer(1, 12))
-                os.remove(filename)
+    # Meilleures solutions
+    story.append(Paragraph("🏆 Meilleures solutions :", styles['Heading2']))
+    for critere, vehicule in meilleures.items():
+        story.append(Paragraph(f"{critere} : {vehicule}", styles['Normal']))
 
-        elements.append(Paragraph("🏆 Meilleures solutions :", styles['Heading2']))
-        for critere, valeur in meilleures.items():
-            elements.append(Paragraph(f"{critere} : {valeur}", styles['Normal']))
+    doc.build(story)
+    return fichier_pdf
 
-    doc.build(elements)
-    return "rapport_logistique.pdf"
-
-# --------------------------
-# Application Streamlit
-# --------------------------
+# -------------------------------
+# Interface Streamlit
+# -------------------------------
 st.title("🚚 Assistant Logistique Intelligent")
-st.write("Optimisation des solutions de transport selon le coût, le temps et les émissions.")
 
 distance = st.number_input("Distance (km)", min_value=1, value=100)
 poids = st.number_input("Poids de la marchandise (kg)", min_value=1, value=500)
-delai_max = st.number_input("Délai maximum (heures)", min_value=1.0, value=5.0, step=0.25)
+delai_max = st.number_input("Délai maximum (heures)", min_value=1, value=5)
 
-if st.button("🔍 Calculer les solutions"):
-    df, meilleures = calculer_solutions(distance, poids, delai_max)
+if st.button("Calculer"):
+    df = calculer_resultats(distance, poids, delai_max)
 
     if df.empty:
-        st.error("❌ Aucune solution ne respecte les contraintes.")
+        st.error("⚠️ Aucune solution possible avec ces contraintes.")
     else:
-        st.subheader("📊 Tableau comparatif")
+        st.subheader("📊 Résultats comparatifs")
         st.dataframe(df)
 
-        st.subheader("📈 Graphiques comparatifs")
-        for col in ["Coût (FCFA)", "Temps (h)", "Émissions (kg CO2)"]:
-            fig, ax = plt.subplots()
-            df.plot(x="Motorisation", y=col, kind="bar", ax=ax, legend=False)
-            ax.set_title(col)
-            ax.set_ylabel(col)
-            st.pyplot(fig)
-
+        meilleures = meilleures_solutions(df)
         st.subheader("🏆 Meilleures solutions")
-        for critere, valeur in meilleures.items():
-            st.write(f"**{critere}** : {valeur}")
+        for critere, vehicule in meilleures.items():
+            st.write(f"{critere} → {vehicule}")
 
-        if st.button("📄 Exporter le rapport PDF"):
-            fichier_pdf = generer_pdf(df, distance, poids, delai_max, meilleures)
-            with open(fichier_pdf, "rb") as f:
-                st.download_button("Télécharger le PDF", f, file_name="rapport_logistique.pdf")
+        # Graphiques interactifs
+        for col in ["Coût (FCFA)", "Temps (h)", "Émissions CO2 (kg)"]:
+            st.bar_chart(df.set_index("Véhicule")[col])
+
+        # Export PDF
+        fichier_pdf = generer_pdf(df, distance, poids, delai_max, meilleures)
+        with open(fichier_pdf, "rb") as f:
+            st.download_button("📄 Télécharger le rapport PDF", f, file_name="rapport_logistique.pdf", mime="application/pdf")
