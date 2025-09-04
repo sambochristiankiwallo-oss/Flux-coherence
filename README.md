@@ -18,7 +18,7 @@ Elle propose toujours la solution la plus **rentable**, **rapide**, et **respect
 
 ## 🚀 Démo en ligne
 👉 [Cliquez ici pour accéder à l’application](https://ton-lien-streamlit)  
-*(remplace ce lien par ton vrai lien Streamlit Cloud une fois déployé)*
+*(https://mogock-flux-coherence.streamlit.app/)*
 
 ---
 
