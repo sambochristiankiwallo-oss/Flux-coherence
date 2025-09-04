@@ -34,3 +34,7 @@ L’application génère également un **rapport PDF avec tableaux et graphiques
 
    ## Auteur
 👤 Développé par **Christian Sambo Kiwallo**
+
+## Licence
+Ce projet est distribué sous license  
+Vous pouvez consulter les détails dans le fichier [LICENSE](LICENSE).
