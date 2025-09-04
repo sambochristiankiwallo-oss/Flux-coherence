@@ -1,61 +1,74 @@
 import streamlit as st
 import pandas as pd
-import io
 import matplotlib.pyplot as plt
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet
+import io
 
-# -----------------------------
-# Données de coût énergétique (FCFA)
-# -----------------------------
-COUTS = {
-    "Diesel": 720,      # FCFA / L
-    "Essence": 695,     # FCFA / L
-    "Hybride": 710,     # mix estimatif FCFA / L
-    "Electrique": 109   # FCFA / kWh
-}
+# ------------------------
+# Config Streamlit
+# ------------------------
+st.set_page_config(
+    page_title="Assistant Logistique Intelligent",
+    page_icon="🚛",
+    layout="wide"
+)
 
-# -----------------------------
-# Fonction de simulation
-# -----------------------------
-def simuler_solutions(distance_km, delai_h):
-    solutions = []
+st.image("logo.png", width=120)
+st.title("🚚 Assistant Logistique Intelligent")
+st.write("Optimisation des coûts, délais et émissions pour vos livraisons.")
 
-    scenarios = [
-        ("Diesel", "Rapide", 80, 0.22, 18),
-        ("Hybride", "Normal", 75, 0.18, 10),
-        ("Electrique", "Éco", 70, 0.15, 0.03)
-    ]
+# ------------------------
+# Fonctions de calcul
+# ------------------------
+def calculer_cout(distance_km, motorisation):
+    if motorisation == "Essence":
+        consommation = 0.07 * distance_km  # L
+        cout = consommation * 695
+    elif motorisation == "Diesel":
+        consommation = 0.055 * distance_km  # L
+        cout = consommation * 720
+    elif motorisation == "Hybride":
+        consommation = 0.045 * distance_km  # L
+        cout = consommation * 695
+    elif motorisation == "Électrique":
+        consommation = 0.18 * distance_km  # kWh
+        cout = consommation * 109
+    else:
+        cout = float("inf")
+    return round(cout, 2)
 
-    for motorisation, scenario, vitesse, conso, emissions_unit in scenarios:
-        temps_h = distance_km / vitesse
-        cout = conso * distance_km * COUTS[motorisation if motorisation != "Electrique" else "Electrique"]
-        emissions = emissions_unit * distance_km
+def calculer_emissions(distance_km, motorisation):
+    if motorisation == "Essence":
+        consommation = 0.07 * distance_km  # L
+        emissions = consommation * 2.31
+    elif motorisation == "Diesel":
+        consommation = 0.055 * distance_km  # L
+        emissions = consommation * 2.68
+    elif motorisation == "Hybride":
+        consommation = 0.045 * distance_km  # L
+        emissions = consommation * 2.31
+    elif motorisation == "Électrique":
+        consommation = 0.18 * distance_km  # kWh
+        emissions = consommation * 0.1
+    else:
+        emissions = float("inf")
+    return round(emissions, 2)
 
-        solutions.append({
-            "Motorisation": motorisation,
-            "Scénario": scenario,
-            "Temps (h)": round(temps_h, 2),
-            "Coût (FCFA)": round(cout, 2),
-            "Émissions (kg)": round(emissions, 2)
-        })
+def calculer_temps(distance_km, vitesse_moy=60):
+    return round(distance_km / vitesse_moy, 2)
 
-    df = pd.DataFrame(solutions)
-
-    # Filtrage selon le délai (toujours 10min d’avance = 0.17h)
-    df = df[df["Temps (h)"] <= (delai_h - 0.17)]
-    return df
-
-# -----------------------------
-# Génération de graphiques
-# -----------------------------
+# ------------------------
+# Génération des graphiques
+# ------------------------
 def generate_charts(df):
     charts = []
 
     # Coût
     fig, ax = plt.subplots()
-    df.plot(kind="bar", x="Motorisation", y="Coût (FCFA)", ax=ax, legend=False)
+    df.plot(kind="bar", x="Motorisation", y="Coût (FCFA)", ax=ax, legend=False, color="blue")
     ax.set_ylabel("FCFA")
     ax.set_title("Comparaison des coûts")
     buf1 = io.BytesIO()
@@ -88,12 +101,12 @@ def generate_charts(df):
 
     return charts
 
-# -----------------------------
+# ------------------------
 # Génération du PDF
-# -----------------------------
+# ------------------------
 def generate_pdf(df, meilleure_solution):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer)
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
     styles = getSampleStyleSheet()
     story = []
 
@@ -138,16 +151,30 @@ def generate_pdf(df, meilleure_solution):
     buffer.seek(0)
     return buffer
 
-# -----------------------------
+# ------------------------
 # Interface Streamlit
-# -----------------------------
-st.title("🚛 Assistant Intelligent d’Optimisation Logistique")
+# ------------------------
+distance = st.number_input("Entrez la distance (km)", min_value=1, value=100)
+delai_max = st.number_input("Entrez le délai maximum (heures)", min_value=1, value=4)
 
-distance = st.number_input("Distance du trajet (km)", min_value=10, value=100, step=10)
-delai = st.number_input("Délai maximum (heures)", min_value=1, value=4, step=1)
+if st.button("Calculer les solutions"):
+    data = []
+    for motorisation in ["Essence", "Diesel", "Hybride", "Électrique"]:
+        cout = calculer_cout(distance, motorisation)
+        emissions = calculer_emissions(distance, motorisation)
+        temps = calculer_temps(distance)
 
-if st.button("Calculer les solutions optimales"):
-    df = simuler_solutions(distance, delai)
+        # On accepte seulement si le temps respecte le délai - 10 minutes
+        if temps <= delai_max - (10/60):
+            data.append({
+                "Motorisation": motorisation,
+                "Scénario": "Livraison directe",
+                "Coût (FCFA)": cout,
+                "Émissions (kg)": emissions,
+                "Temps (h)": temps
+            })
+
+    df = pd.DataFrame(data)
 
     if not df.empty:
         meilleure_solution = df.sort_values(["Coût (FCFA)", "Émissions (kg)", "Temps (h)"]).iloc[0]
@@ -167,4 +194,4 @@ if st.button("Calculer les solutions optimales"):
             mime="application/pdf"
         )
     else:
-        st.error("⚠️ Aucune solution ne respecte le délai (au moins 10 min d’avance exigés).")
+        st.error("Aucune solution ne respecte le délai imposé.")
