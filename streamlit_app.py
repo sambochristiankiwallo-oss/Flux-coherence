@@ -17,6 +17,8 @@ VEHICULES = {
     "Tricycle essence": {"conso": 5, "co2": 0.09, "vitesse": 50, "capacité": 200, "type": "Tricycle"},
     "Voiture hybride": {"conso": 5, "co2": 0.05, "vitesse": 85, "capacité": 300, "type": "Voiture"},
     "Camion électrique": {"conso": 1.2, "co2": 0.0, "vitesse": 65, "capacité": 4000, "type": "Camion"},
+    "Moto électrique": {"conso": 0.7, "co2": 0.0, "vitesse": 65, "capacité": 60, "type": "Moto"},
+    "Tricycle électrique": {"conso": 1.5, "co2": 0.0, "vitesse": 45, "capacité": 250, "type": "Tricycle"},
 }
 
 COUTS = {
@@ -35,6 +37,7 @@ def run_simulation(distance, deadline, weight, goods, traffic):
         if weight > data["capacité"]:
             continue
 
+        # Ajustement vitesse selon trafic
         speed = data["vitesse"]
         if traffic == "Élevé":
             speed *= 0.7
@@ -43,6 +46,7 @@ def run_simulation(distance, deadline, weight, goods, traffic):
 
         temps = round(distance / speed, 2)
 
+        # Calcul coût et émissions
         if "électrique" in mode.lower():
             consommation = (distance / 100) * data["conso"] * COUTS["kwh"]
             emission = (distance / 100) * data["co2"]
@@ -53,7 +57,10 @@ def run_simulation(distance, deadline, weight, goods, traffic):
             consommation = (distance / 100) * data["conso"] * COUTS["essence"]
             emission = (distance / 100) * data["co2"]
 
+        # Règle : doit être au moins 10 min avant la deadline
         faisable = temps <= (deadline - 0.25)
+
+        # Score global
         score = -consommation*0.4 - emission*0.3 - temps*0.3
 
         results.append({
@@ -69,7 +76,7 @@ def run_simulation(distance, deadline, weight, goods, traffic):
     return pd.DataFrame(results)
 
 # -------------------------------
-# Fonction PDF
+# Génération PDF
 # -------------------------------
 def generate_pdf(df, best_solutions, final_choice):
     buffer = io.BytesIO()
@@ -81,6 +88,7 @@ def generate_pdf(df, best_solutions, final_choice):
     elements.append(Paragraph("📊 Rapport d'optimisation logistique", styles['Title']))
     elements.append(Spacer(1, 12))
 
+    # Tableau comparatif
     table_data = [list(df.columns)] + df.values.tolist()
     table = Table(table_data)
     table.setStyle(TableStyle([
@@ -91,6 +99,7 @@ def generate_pdf(df, best_solutions, final_choice):
     elements.append(table)
     elements.append(Spacer(1, 12))
 
+    # Solutions par critère
     elements.append(Paragraph("🏆 Meilleures solutions par critère", styles['Heading2']))
     for crit, sol in best_solutions.items():
         elements.append(Paragraph(f"✔️ {crit} : {sol['Mode']} "
@@ -99,6 +108,7 @@ def generate_pdf(df, best_solutions, final_choice):
                                   f"CO₂: {sol['Émissions (kg CO2)']} kg)", styles['Normal']))
     elements.append(Spacer(1, 12))
 
+    # Verdict final
     elements.append(Paragraph("🥇 Verdict final", styles['Heading2']))
     elements.append(Paragraph(
         f"La meilleure solution est <b>{final_choice['Mode']}</b> "
@@ -107,6 +117,7 @@ def generate_pdf(df, best_solutions, final_choice):
         f"CO₂: {final_choice['Émissions (kg CO2)']} kg).", styles['Normal']
     ))
 
+    # Diagramme comparatif
     fig, ax = plt.subplots()
     df.set_index("Mode")[["Coût total (FCFA)", "Temps (h)", "Émissions (kg CO2)"]].plot(kind="bar", ax=ax)
     ax.set_ylabel("Valeurs")
