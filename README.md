@@ -1,32 +1,24 @@
-# 🚚 Assistant Intelligent d’Optimisation Logistique
+# 🚚 Flux Logistique Intelligent  
 
-Bienvenue dans **l’Assistant Intelligent d’Optimisation Logistique**, une application interactive développée avec [Streamlit](https://streamlit.io/).
+## 🇫🇷 Description (Français)  
+Cette application est un **assistant intelligent d’optimisation logistique** développé avec **Streamlit**.  
+Elle permet de comparer plusieurs scénarios de livraison en fonction de :  
+- ⛽ **Coût du carburant** (essence, diesel, hybride, électrique)  
+- ⏱️ **Temps de trajet** et respect des délais  
+- 🌍 **Pollution (émissions de CO₂)**  
+- 📦 **Adaptation aux types de marchandises**  
+- 🛠️ **Maintenance et autonomie des véhicules**  
 
-Cette application aide à **planifier et optimiser** vos livraisons en fonction de la distance, du délai maximum, et du type de véhicule (thermique, hybride, électrique).  
-Elle propose toujours la solution la plus **rentable**, **rapide**, et **respectueuse du délai**, avec une marge de 15 minutes minimum.
+### ✅ Fonctionnalités principales  
+1. Analyse comparative de plusieurs solutions :  
+   - La **moins chère**  
+   - La **plus rapide**  
+   - La **moins polluante**  
+   - La **mieux adaptée aux marchandises**  
+2. Génération d’un **score logistique global** prenant en compte coûts, délais, pollution et capacité.  
+3. Export des résultats sous forme de **PDF avec graphiques et tableaux**.  
 
----
-
-## ✨ Fonctionnalités
-- 📥 **Entrée personnalisée** : distance, délai, marchandises.  
-- 📊 **Comparaison automatique** des options (thermique, hybride, électrique).  
-- 📈 **Graphique visuel** des résultats.  
-- 📄 **Téléchargement d’un rapport PDF** personnalisé.  
-- ✅ Vérifie toujours que les solutions proposées respectent le délai avec 15 minutes de marge.  
-
----
-
-## 🚀 Démo en ligne
-👉 [Cliquez ici pour accéder à l’application](https://ton-lien-streamlit)  
-*(https://mogock-flux-coherence.streamlit.app/)*
-
----
-
-## 🖥️ Installation locale
-
-Si vous souhaitez exécuter l’application localement :  
-
-### 1. Cloner le dépôt
+### 🚀 Lancer l’application localement  
 ```bash
-git clone https://github.com/ton-nom-utilisateur/ton-repo.git
-cd ton-repo
+pip install -r requirements.txt
+streamlit run app.py
