@@ -31,3 +31,6 @@ L’application génère également un **rapport PDF avec tableaux et graphiques
    ```bash
    git clone https://github.com/TON_COMPTE/TON_REPO.git
    cd TON_REPO
+
+   ## Auteur
+👤 Développé par **Christian Sambo Kiwallo**
